@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#efe6d2">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@2.40.3/dist/galmuri.css">
+<title>레벨별 화면</title>
+<style>
+  :root { --ink: #6a4636; --sub: #a57c5e; --brown: #b07a52; --tan: #d4a373; --cream: #f3dfb8; --paper: #fff4dc;
+    --green: #a6cf63; --green-dark: #5e7a3a;
+    --round: polygon(0 6px, 2px 6px, 2px 2px, 6px 2px, 6px 0, calc(100% - 6px) 0, calc(100% - 6px) 2px, calc(100% - 2px) 2px,
+      calc(100% - 2px) 6px, 100% 6px, 100% calc(100% - 6px), calc(100% - 2px) calc(100% - 6px), calc(100% - 2px) calc(100% - 2px),
+      calc(100% - 6px) calc(100% - 2px), calc(100% - 6px) 100%, 6px 100%, 6px calc(100% - 2px), 2px calc(100% - 2px), 2px calc(100% - 6px), 0 calc(100% - 6px)); }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #efe6d2; color: var(--ink); font: 14px/1.5 'Galmuri11', monospace; -webkit-font-smoothing: none;
+    padding: calc(12px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom)); }
+  .back { display: inline-block; padding: 8px 12px; background: var(--cream); color: var(--ink); text-decoration: none; clip-path: var(--round);
+    border: 2px solid var(--brown); border-bottom: 5px solid var(--tan); }
+  .back:active { transform: translateY(3px); border-bottom-width: 2px; }
+  :focus-visible { outline: 3px dashed var(--green-dark); outline-offset: -6px; }
+  h1 { font-size: 22px; font-weight: 400; margin-top: 16px; }
+  .now { margin: 8px 0 4px; font-size: 15px; }
+  .now b { font-weight: 400; color: var(--green-dark); }
+  p { color: var(--sub); font-size: 12px; margin-bottom: 20px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 24px 16px; }
+  figure { display: grid; gap: 6px; justify-items: center; }
+  figcaption { display: grid; justify-items: center; font-size: 13px; }
+  figcaption span { color: var(--sub); font-size: 11px; }
+  figcaption i { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--brown); margin-right: 6px; vertical-align: -1px; }
+  .here { font-size: 11px; padding: 1px 6px; background: var(--green); color: var(--green-dark); margin-left: 4px; }
+  /* 캡처 이미지: levels/lvN.webp (index.html?lv=N 화면을 찍은 것) */
+  .phone { width: 242px; height: auto; display: block; border: 4px solid var(--tan); }
+  .cur .phone { border-color: var(--green-dark); }
+  @media (max-width: 600px) { /* 폰에서는 2열 */
+    .grid { grid-template-columns: 1fr 1fr; gap: 18px 10px; }
+    .phone { width: 100%; max-width: 200px; border-width: 3px; }
+  }
+</style>
+</head>
+<body>
+<a class="back" href="index.html" id="back">◀ 돌아가기</a>
+<h1>레벨별 화면</h1>
+<div class="now" id="now"></div>
+<p>목표의 10%를 모을 때마다 레벨이 오르고 들판과 동산 색이 바뀌어요. 각 화면은 그 레벨 구간 중간쯤 모은 데모예요.</p>
+<div class="grid" id="grid"></div>
+<script type="module">
+  import { progress, ym, today, FMT } from './calc.js';
+  import { LEVEL_BG } from './icons.js';
+
+  // 홈 화면 앱엔 뒤로가기 버튼이 없어서: 앱에서 왔으면 history.back, 바로 열었으면 index.html로
+  document.getElementById('back').onclick = e => { if (document.referrer.startsWith(location.origin)) { e.preventDefault(); history.back(); } };
+
+  let D = null;
+  try { D = JSON.parse(localStorage.getItem('savings-book')); } catch {}
+  const goal = D?.settings?.goal || 20000000;
+  const value = D?.accounts ? progress({ fixed: [], installments: [], valuations: [], ...D }, ym(today())).value : 0;
+  const pct = (value / goal) * 100;
+  const cur = pct >= 100 ? 11 : Math.floor(pct / 10) + 1; // 11 = CLEAR
+  const toNext = cur > 10 ? 0 : (goal * cur) / 10 - value;
+  document.getElementById('now').innerHTML = cur > 10
+    ? `지금 <b>CLEAR</b> · ${FMT(value)}원 모았어요!`
+    : `지금 <b>LV.${cur}</b> · ${FMT(value)}원 (${pct.toFixed(1)}%) · LV.${cur + 1}까지 ${FMT(toNext)}원`;
+
+  const NAME = ['연두', '새싹', '민트', '하늘', '라벤더', '핑크', '복숭아', '황금 들판', '노을', '금빛', '금빛'];
+  document.getElementById('grid').innerHTML = NAME.map((name, i) => {
+    const lv = i + 1, label = lv > 10 ? 'CLEAR' : `LV.${lv}`, color = LEVEL_BG[Math.min(i, 9)][0];
+    const from = lv > 10 ? `${FMT(goal)}원` : `${FMT((goal * i) / 10)}원~`;
+    return `<figure class="${lv === cur ? 'cur' : ''}" id="lv${lv}">
+      <figcaption><div><i style="background:${color}"></i>${label}${lv === cur ? '<span class="here">지금 여기</span>' : ''}</div><span>${from} · ${name}</span></figcaption>
+      <img class="phone" src="levels/lv${lv}.webp" width="488" height="1055" loading="lazy" alt="${label} 화면"></figure>`;
+  }).join('');
+  document.getElementById('lv' + cur).scrollIntoView({ block: 'center' });
+</script>
+</body>
+</html>

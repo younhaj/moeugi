@@ -1,0 +1,9 @@
+{
+  "name": "모으기",
+  "short_name": "모으기",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#d5e07b",
+  "theme_color": "#d5e07b",
+  "icons": [{ "src": "icon.png", "sizes": "512x512", "type": "image/png" }]
+}
