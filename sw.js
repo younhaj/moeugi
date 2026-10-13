@@ -1,8 +1,8 @@
 // 네트워크 우선, 실패하면 캐시 (오프라인에서도 열림 + 배포하면 바로 반영)
-const C = 'v12';
+const C = 'v13';
 self.addEventListener('install', e => {
   self.skipWaiting();
-  e.waitUntil(caches.open(C).then(c => c.addAll(['./', 'index.html', 'app.js', 'calc.js', 'manifest.json', 'icon.png', 'icons.js', 'levels.html'])));
+  e.waitUntil(caches.open(C).then(c => c.addAll(['./', 'index.html', 'app.js', 'calc.js', 'manifest.json', 'icon.png', 'icon-180.png', 'icons.js', 'levels.html'])));
 });
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', e => {
